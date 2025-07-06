@@ -1,0 +1,170 @@
+/* ManufacturerDashboard.css */
+body,
+html {
+  margin: 0;
+  padding: 0;
+  font-family: "Space Grotesk", "Noto Sans", sans-serif;
+  background-color: #141a1f;
+  color: white;
+  overflow-x: hidden;
+}
+
+.dashboard-root {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background-color: #141a1f;
+  width: 300px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 2rem;
+  height: 100vh; /* ⬅️ Add this line */
+  position: sticky; /* optional if you want it to stay fixed during scroll */
+  top: 0;            
+}
+
+.sidebar h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 9999px;
+  transition: background 0.3s ease;
+  cursor: pointer;
+}
+
+
+.menu-item.active,
+.menu-item:hover {
+  background-color: #2a3641;
+}
+
+.main {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+.btn-dark:hover {
+  background-color: #12171a; /* Slightly lighter shade */
+  transform: scale(1.03);    /* Slight zoom-in effect */
+}
+
+
+h2 {
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: transparent;
+  border: 1px solid #3c4e5d;
+  border-radius: 12px;
+  padding: 20px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.stat-card h3 {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 5px 0;
+}
+
+.green {
+  color: #0bda5b;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.btn-light {
+  background-color: #d7e6f3;
+  color: #141a1f;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  font-weight: bold;
+}
+
+.btn-dark {
+  background-color: #2a3641;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  font-weight: bold;
+}
+
+.forecast,
+.heatmap {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.forecast-card,
+.heatmap-card {
+  border: 1px solid #3c4e5d;
+  border-radius: 12px;
+  padding: 20px;
+  flex: 1;
+  min-width: 300px;
+}
+
+.forecast-card .graph {
+  width: 100%;
+  height: 150px;
+  margin: 20px 0;
+  object-fit: cover;
+}
+
+.days,
+.stations {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #9bafbf;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: end;
+  height: 180px;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.bar {
+  background-color: #2a3641;
+  border-top: 2px solid #9bafbf;
+}
