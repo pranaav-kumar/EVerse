@@ -55,7 +55,7 @@ function Maintenance({ stations, updateStation }) {
                 </div>
 
                 <div className="my-2">
-                  <label className="text-sm font-medium">Last Serviced Date:</label>
+                  <label className="text-sm font-medium text-black">Last Serviced Date:</label>
                   <input
                     type="date"
                     value={station.lastServicedDate ? station.lastServicedDate.substring(0, 10) : ''}
@@ -70,7 +70,7 @@ function Maintenance({ stations, updateStation }) {
                     style={{ width: `${station.healthPercent}%` }}
                   ></div>
                 </div>
-                <p className="text-sm mt-1">{station.daysLeft} days left until next maintenance</p>
+                <p className="text-sm mt-1 text-black">{station.daysLeft} days left until next maintenance</p>
               </div>
             ))}
           </div>

@@ -7,6 +7,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
+
 // Fix Leaflet default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -126,7 +127,7 @@ function AddStations({ stations = [], setStations }) {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-4xl mx-auto bg-white shadow-md rounded-md p-6">
+      <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg p-6 text-gray-900">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-center flex-1">EV Station Management</h1>
           <button
@@ -151,40 +152,41 @@ function AddStations({ stations = [], setStations }) {
         </div>
 
         {view === 'add' && (
-          <div className="space-y-4">
-            <input
-              type="text"
-              name="name"
-              placeholder="Station Name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-            />
+  <div className="space-y-4">
+    <input
+      type="text"
+      name="name"
+      placeholder="Station Name"
+      value={formData.name}
+      onChange={handleChange}
+      className="w-full p-2 border rounded bg-white text-gray-900"
+    />
 
-            <div>
-              <label className="block mb-1">Search or Select Location:</label>
-              <div className="mb-2 flex gap-2">
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search location..."
-                  className="w-full p-2 border rounded"
-                />
-                <button
-                  className="bg-blue-600 text-white px-4 py-1 rounded"
-                  onClick={async () => {
-                    const result = await geocodeAddress(searchInput);
-                    if (result) {
-                      setFormData(prev => ({ ...prev, location: result }));
-                    } else {
-                      alert('Location not found');
-                    }
-                  }}
-                >
-                  Search
-                </button>
-              </div>
+    <div>
+      <label className="block mb-1">Search or Select Location:</label>
+      <div className="mb-2 flex gap-2">
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search location..."
+          className="w-full p-2 border rounded bg-white text-gray-900"
+        />
+        <button
+          className="bg-blue-600 text-white px-4 py-1 rounded"
+          onClick={async () => {
+            const result = await geocodeAddress(searchInput);
+            if (result) {
+              setFormData(prev => ({ ...prev, location: result }));
+            } else {
+              alert('Location not found');
+            }
+          }}
+        >
+          Search
+        </button>
+      </div>
+
 
               <MapContainer
                 center={[20.5937, 78.9629]}
@@ -208,31 +210,31 @@ function AddStations({ stations = [], setStations }) {
             </div>
 
             <div className="flex gap-4 items-center">
-              <label>
-                <input type="checkbox" value="Charging" checked={formData.type.includes('Charging')} onChange={handleTypeChange} /> Charging
-              </label>
-              <label>
-                <input type="checkbox" value="Swapping" checked={formData.type.includes('Swapping')} onChange={handleTypeChange} /> Swapping
-              </label>
-            </div>
+      <label>
+        <input type="checkbox" value="Charging" checked={formData.type.includes('Charging')} onChange={handleTypeChange} className="mr-1" /> Charging
+      </label>
+      <label>
+        <input type="checkbox" value="Swapping" checked={formData.type.includes('Swapping')} onChange={handleTypeChange} className="mr-1" /> Swapping
+      </label>
+    </div>
 
-            <select name="connectors" value={formData.connectors} onChange={handleChange} className="w-full p-2 border rounded">
-              <option value="">Connector Type</option>
-              <option>Type2</option>
-              <option>CCS</option>
-              <option>CHAdeMO</option>
-              <option>Bharat AC</option>
-              <option>Bharat DC</option>
-            </select>
+    <select name="connectors" value={formData.connectors} onChange={handleChange} className="w-full p-2 border rounded bg-white text-gray-900">
+      <option value="">Connector Type</option>
+      <option>Type2</option>
+      <option>CCS</option>
+      <option>CHAdeMO</option>
+      <option>Bharat AC</option>
+      <option>Bharat DC</option>
+    </select>
 
-            <input type="number" name="ports" placeholder="Number of Ports" value={formData.ports} onChange={handleChange} className="w-full p-2 border rounded" />
-            <input type="text" name="power" placeholder="Power Rating (kW)" value={formData.power} onChange={handleChange} className="w-full p-2 border rounded" />
+    <input type="number" name="ports" placeholder="Number of Ports" value={formData.ports} onChange={handleChange} className="w-full p-2 border rounded bg-white text-gray-900" />
+    <input type="text" name="power" placeholder="Power Rating (kW)" value={formData.power} onChange={handleChange} className="w-full p-2 border rounded bg-white text-gray-900" />
 
-            <button onClick={handleAddStation} className="w-full bg-green-600 text-white p-2 rounded">
-              {editingIndex !== null ? 'Update Station' : 'Add Station'}
-            </button>
-          </div>
-        )}
+    <button onClick={handleAddStation} className="w-full bg-green-600 text-white p-2 rounded">
+      {editingIndex !== null ? 'Update Station' : 'Add Station'}
+    </button>
+  </div>
+)}
 
         {view === 'manage' && (
           <div className="space-y-4">
