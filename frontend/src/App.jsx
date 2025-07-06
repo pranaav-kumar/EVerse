@@ -2,7 +2,7 @@ import "leaflet/dist/leaflet.css";
 import { useState } from "react";
 import {BrowserRouter , Routes , Route} from 'react-router-dom';
 import AddStations from "./AddStations.jsx";
-import Home from './Home.jsx';
+import Home2 from './Home2.jsx';
 import Maintenance from './Maintenance.jsx';
 
 function App(){
@@ -14,9 +14,10 @@ function App(){
   return(
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home2 />} />
           <Route path="/addstations" element={<AddStations stations={stations} setStations={setStations} />} />
-          <Route path="/maintenance" element={<Maintenance stations={stations} updateStation={updateStation} />} />        </Routes>
+          <Route path="/maintenance" element={<Maintenance stations={stations} updateStation={updateStation} />} />        
+        </Routes>
       </BrowserRouter>
   );
 }

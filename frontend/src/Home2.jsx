@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-function Home(){
+function Home2(){
     const navigate = useNavigate();
     return(
     <div>
@@ -8,4 +8,4 @@ function Home(){
         <button onClick={()=>navigate("/maintenance")}>Maintenance</button>
     </div>);
 }
-export default Home;
+export default Home2;
