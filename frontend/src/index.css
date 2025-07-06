@@ -3,3 +3,9 @@
 @tailwind utilities;
 
 
+button{
+    background-color: aquamarine;
+    border-radius: 50px;
+    margin: 20px;
+    width:100px
+}

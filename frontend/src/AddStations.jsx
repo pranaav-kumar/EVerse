@@ -1,10 +1,30 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-function AddStations() {
-  const [stations, setStations] = useState([]);
+// Fix default marker icons
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
+
+async function reverseGeocode(lat, lng) {
+  const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+  const data = await res.json();
+  return data.display_name || 'Unknown Location';
+}
+
+function AddStations({ stations = [], setStations }) {
   const [formData, setFormData] = useState({
     name: '',
-    location: '',
+    location: null,
     type: [],
     connectors: '',
     ports: '',
@@ -12,18 +32,19 @@ function AddStations() {
   });
   const [view, setView] = useState('add');
   const [editingIndex, setEditingIndex] = useState(null);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleTypeChange = (e) => {
     const { value, checked } = e.target;
-    setFormData((prev) => {
+    setFormData(prev => {
       const types = checked
         ? [...prev.type, value]
-        : prev.type.filter((t) => t !== value);
+        : prev.type.filter(t => t !== value);
       return { ...prev, type: types };
     });
   };
@@ -31,7 +52,7 @@ function AddStations() {
   const handleAddStation = () => {
     const { name, location, type, connectors, ports, power } = formData;
     if (!name || !location || type.length === 0 || !connectors || !ports || !power) {
-      alert(' Please fill all fields');
+      alert('Please fill all fields and select location on the map.');
       return;
     }
 
@@ -40,19 +61,18 @@ function AddStations() {
       updated[editingIndex] = formData;
       setStations(updated);
       setEditingIndex(null);
-      alert(' Station updated!');
+      alert('Station updated!');
     } else {
-      setStations((prev) => [...prev, formData]);
-      alert(' Station added!');
+      setStations(prev => [...prev, formData]);
+      alert('Station added!');
     }
 
-    setFormData({ name: '', location: '', type: [], connectors: '', ports: '', power: '' });
+    setFormData({ name: '', location: null, type: [], connectors: '', ports: '', power: '' });
   };
 
   const handleRemove = (index) => {
-    const confirmed = window.confirm('Are you sure you want to delete this station?');
-    if (confirmed) {
-      setStations((prev) => prev.filter((_, i) => i !== index));
+    if (window.confirm('Delete this station?')) {
+      setStations(prev => prev.filter((_, i) => i !== index));
     }
   };
 
@@ -63,39 +83,30 @@ function AddStations() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 font-sans">
-      <div className="max-w-4xl mx-auto bg-white shadow-md rounded-xl p-8">
-        <h1 className="text-3xl font-bold text-center mb-8 text-blue-600">EV Station Management</h1>
-
-        {/* View toggle buttons */}
-        <div className="flex justify-center gap-4 mb-6">
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-4xl mx-auto bg-white shadow-md rounded-md p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold text-center flex-1">EV Station Management</h1>
           <button
-            onClick={() => {
-              setView('add');
-              setFormData({ name: '', location: '', type: [], connectors: '', ports: '', power: '' });
-              setEditingIndex(null);
-            }}
-            className={`px-6 py-2 rounded-lg font-medium ${
-              view === 'add' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-            }`}
+            onClick={() => navigate(-1)}
+            className="bg-gray-200 hover:bg-blue-600 hover:text-white text-blue-600 font-semibold px-4 py-2 rounded transition-colors"
           >
-             {editingIndex !== null ? 'Edit Station' : 'Add Station'}
+            ← Back
+          </button>
+        </div>
+        <div className="flex gap-2 justify-center mb-4">
+          <button
+            onClick={() => { setView('add'); setEditingIndex(null); setFormData({ name:'', location:null, type:[], connectors:'', ports:'', power:'' }); }}
+            className={`px-4 py-2 rounded ${view === 'add' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+            {editingIndex !== null ? 'Edit Station' : 'Add Station'}
           </button>
           <button
-            onClick={() => {
-              setView('manage');
-              setFormData({ name: '', location: '', type: [], connectors: '', ports: '', power: '' });
-              setEditingIndex(null);
-            }}
-            className={`px-6 py-2 rounded-lg font-medium ${
-              view === 'manage' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-            }`}
-          >
-             Manage Stations
+            onClick={() => setView('manage')}
+            className={`px-4 py-2 rounded ${view === 'manage' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+            Manage Stations
           </button>
         </div>
 
-        {/* Add Station Form */}
         {view === 'add' && (
           <div className="space-y-4">
             <input
@@ -104,119 +115,94 @@ function AddStations() {
               placeholder="Station Name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full p-3 border rounded-lg"
-            />
-            <input
-              type="text"
-              name="location"
-              placeholder="Location"
-              value={formData.location}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg"
+              className="w-full p-2 border rounded"
             />
 
-            <div className="flex gap-6 items-center">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  value="Charging"
-                  checked={formData.type.includes('Charging')}
-                  onChange={handleTypeChange}
-                  className="accent-blue-500"
-                />
-                Charging
+            <div>
+              <label className="block mb-1">Select Location:</label>
+              <MapContainer
+                center={[20.5937, 78.9629]}
+                zoom={5}
+                style={{ height: '250px', width: '100%' }}
+              >
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <MapClick setFormData={setFormData} />
+                {formData.location && (
+                  <Marker position={[formData.location.lat, formData.location.lng]} />
+                )}
+              </MapContainer>
+              {formData.location && (
+                <p className="mt-2 text-sm">
+                  📍 {formData.location.address}<br />
+                  Lat {formData.location.lat.toFixed(4)}, Lng {formData.location.lng.toFixed(4)}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-4 items-center">
+              <label>
+                <input type="checkbox" value="Charging" checked={formData.type.includes('Charging')} onChange={handleTypeChange} /> Charging
               </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  value="Swapping"
-                  checked={formData.type.includes('Swapping')}
-                  onChange={handleTypeChange}
-                  className="accent-blue-500"
-                />
-                Swapping
+              <label>
+                <input type="checkbox" value="Swapping" checked={formData.type.includes('Swapping')} onChange={handleTypeChange} /> Swapping
               </label>
             </div>
 
-            <select
-              name="connectors"
-              value={formData.connectors}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg"
-            >
-              <option value="">Select Connector Type</option>
-              <option value="Type2">Type2</option>
-              <option value="CCS">CCS</option>
-              <option value="CHAdeMO">CHAdeMO</option>
-              <option value="Bharat AC">Bharat AC</option>
-              <option value="Bharat DC">Bharat DC</option>
+            <select name="connectors" value={formData.connectors} onChange={handleChange} className="w-full p-2 border rounded">
+              <option value="">Connector Type</option>
+              <option>Type2</option>
+              <option>CCS</option>
+              <option>CHAdeMO</option>
+              <option>Bharat AC</option>
+              <option>Bharat DC</option>
             </select>
 
-            <input
-              type="number"
-              name="ports"
-              placeholder="Number of Ports"
-              value={formData.ports}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg"
-            />
-            <input
-              type="text"
-              name="power"
-              placeholder="Power Rating (kW)"
-              value={formData.power}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg"
-            />
+            <input type="number" name="ports" placeholder="Number of Ports" value={formData.ports} onChange={handleChange} className="w-full p-2 border rounded" />
+            <input type="text" name="power" placeholder="Power Rating (kW)" value={formData.power} onChange={handleChange} className="w-full p-2 border rounded" />
 
-            <button
-              onClick={handleAddStation}
-              className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition"
-            >
-              {editingIndex !== null ? ' Update Station' : ' Add Station'}
+            <button onClick={handleAddStation} className="w-full bg-green-600 text-white p-2 rounded">
+              {editingIndex !== null ? 'Update Station' : 'Add Station'}
             </button>
           </div>
         )}
 
-        {/* Manage Stations */}
         {view === 'manage' && (
-          <div className="mt-6">
-
+          <div className="space-y-4">
             {stations.length === 0 ? (
-              <p className="text-center text-gray-500">No stations added yet.</p>
+              <p className="text-center">No stations added.</p>
             ) : (
-              <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 mt-4">
-                {stations.map((station, index) => (
-                  <div key={index} className="bg-white border rounded-xl shadow p-5 space-y-2">
-                    <h2 className="text-xl font-semibold text-blue-600">{station.name}</h2>
-                    <p><strong> Location:</strong> {station.location}</p>
-                    <p><strong> Type:</strong> {station.type.join(', ')}</p>
-                    <p><strong> Connectors:</strong> {station.connectors}</p>
-                    <p><strong> Ports:</strong> {station.ports}</p>
-                    <p><strong> Power:</strong> {station.power} kW</p>
-                    <div className="flex justify-between pt-4">
-                      <button
-                        onClick={() => handleEdit(index)}
-                        className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
-                      >
-                         Edit
-                      </button>
-                      <button
-                        onClick={() => handleRemove(index)}
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                      >
-                        Delete
-                      </button>
-                    </div>
+              stations.map((st, i) => (
+                <div key={i} className="border p-2 rounded">
+                  <h2>{st.name}</h2>
+                  <p>{st.location.address}</p>
+                  <p>Lat: {st.location.lat.toFixed(4)}</p>
+                  <p>Lng: {st.location.lng.toFixed(4)}</p>
+                  <p>Type: {st.type.join(', ')}</p>
+                  <p>Conn: {st.connectors}, Ports: {st.ports}, Power: {st.power}</p>
+                  <div className="flex gap-2 mt-2">
+                    <button onClick={() => handleEdit(i)} className="bg-yellow-400 p-1 rounded">Edit</button>
+                    <button onClick={() => handleRemove(i)} className="bg-red-500 p-1 rounded text-white">Delete</button>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))
             )}
           </div>
         )}
       </div>
     </div>
   );
+}
+
+function MapClick({ setFormData }) {
+  useMapEvents({
+    async click(e) {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      const address = await reverseGeocode(lat, lng);
+      setFormData(prev => ({ ...prev, location: { lat, lng, address } }));
+    }
+  });
+  return null;
 }
 
 export default AddStations;
