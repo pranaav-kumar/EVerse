@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-// Fix default marker icons
+// Fix Leaflet default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -15,10 +15,50 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Helper to reverse geocode lat/lng to address
 async function reverseGeocode(lat, lng) {
   const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
   const data = await res.json();
   return data.display_name || 'Unknown Location';
+}
+
+// Helper to geocode address to lat/lng
+async function geocodeAddress(address) {
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+  const data = await res.json();
+  if (data.length === 0) return null;
+  const place = data[0];
+  return {
+    lat: parseFloat(place.lat),
+    lng: parseFloat(place.lon),
+    address: place.display_name,
+  };
+}
+
+// Component to fly the map to a new location
+function MapSearch({ position }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (position) {
+      map.flyTo(position, 14);
+    }
+  }, [position, map]);
+
+  return null;
+}
+
+// Component to handle map clicks
+function MapClick({ setFormData }) {
+  useMapEvents({
+    async click(e) {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      const address = await reverseGeocode(lat, lng);
+      setFormData(prev => ({ ...prev, location: { lat, lng, address } }));
+    }
+  });
+  return null;
 }
 
 function AddStations({ stations = [], setStations }) {
@@ -30,6 +70,8 @@ function AddStations({ stations = [], setStations }) {
     ports: '',
     power: '',
   });
+
+  const [searchInput, setSearchInput] = useState('');
   const [view, setView] = useState('add');
   const [editingIndex, setEditingIndex] = useState(null);
   const navigate = useNavigate();
@@ -94,6 +136,7 @@ function AddStations({ stations = [], setStations }) {
             ← Back
           </button>
         </div>
+
         <div className="flex gap-2 justify-center mb-4">
           <button
             onClick={() => { setView('add'); setEditingIndex(null); setFormData({ name:'', location:null, type:[], connectors:'', ports:'', power:'' }); }}
@@ -119,7 +162,30 @@ function AddStations({ stations = [], setStations }) {
             />
 
             <div>
-              <label className="block mb-1">Select Location:</label>
+              <label className="block mb-1">Search or Select Location:</label>
+              <div className="mb-2 flex gap-2">
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Search location..."
+                  className="w-full p-2 border rounded"
+                />
+                <button
+                  className="bg-blue-600 text-white px-4 py-1 rounded"
+                  onClick={async () => {
+                    const result = await geocodeAddress(searchInput);
+                    if (result) {
+                      setFormData(prev => ({ ...prev, location: result }));
+                    } else {
+                      alert('Location not found');
+                    }
+                  }}
+                >
+                  Search
+                </button>
+              </div>
+
               <MapContainer
                 center={[20.5937, 78.9629]}
                 zoom={5}
@@ -127,10 +193,12 @@ function AddStations({ stations = [], setStations }) {
               >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 <MapClick setFormData={setFormData} />
+                <MapSearch position={formData.location && [formData.location.lat, formData.location.lng]} />
                 {formData.location && (
                   <Marker position={[formData.location.lat, formData.location.lng]} />
                 )}
               </MapContainer>
+
               {formData.location && (
                 <p className="mt-2 text-sm">
                   📍 {formData.location.address}<br />
@@ -191,18 +259,6 @@ function AddStations({ stations = [], setStations }) {
       </div>
     </div>
   );
-}
-
-function MapClick({ setFormData }) {
-  useMapEvents({
-    async click(e) {
-      const lat = e.latlng.lat;
-      const lng = e.latlng.lng;
-      const address = await reverseGeocode(lat, lng);
-      setFormData(prev => ({ ...prev, location: { lat, lng, address } }));
-    }
-  });
-  return null;
 }
 
 export default AddStations;
