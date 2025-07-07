@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-
 // Generate hourly time slots from 6 AM to 11 PM
 const generateFullDaySlots = () => {
   const slots = [];

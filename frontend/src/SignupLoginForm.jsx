@@ -1,8 +1,17 @@
+// src/SignupLoginForm.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import './SignupLoginForm.css';
 import * as THREE from 'three';
 import NET from 'vanta/dist/vanta.net.min';
 import { useNavigate } from 'react-router-dom';
+
+const chargerTypes = [
+  "AC Type 1",
+  "AC Type 2 (Mennekes)",
+  "DC CHAdeMO",
+  "DC CCS2 (Combined Charging System)",
+  "GB/T (AC/DC)"
+];
 
 const SignupLoginForm = () => {
   const [isSignup, setIsSignup] = useState(true);
@@ -46,6 +55,14 @@ const SignupLoginForm = () => {
         showDots: false,
       });
     }
+
+    // Load selected car model if coming from CarModelSelection page
+    const storedCarModel = localStorage.getItem("selectedCarModel");
+    if (storedCarModel) {
+      setFormData((prev) => ({ ...prev, carModel: storedCarModel }));
+      localStorage.removeItem("selectedCarModel");
+    }
+
     return () => {
       if (vantaEffect.current) {
         vantaEffect.current.destroy();
@@ -103,17 +120,20 @@ const SignupLoginForm = () => {
       }
 
       navigate(data.role === 'manufacturer' ? '/manufacturer-dashboard' : '/home');
-
     } catch (err) {
       alert('Network error');
       console.error(err);
     }
   };
 
+  const handleCarModelRedirect = () => {
+    navigate('/car-model-selection');
+  };
+
   return (
     <div ref={vantaRef} className="fullscreen-wrapper">
       <div className="signup-form-container">
-        <h2>{isSignup ? 'Sign Up' : 'Login'}</h2>
+        <h2>{isSignup ? 'EVerse' : 'Login'}</h2>
         <form onSubmit={handleSubmit}>
           {isSignup && (
             <>
@@ -135,8 +155,45 @@ const SignupLoginForm = () => {
 
               {role === 'customer' && (
                 <>
-                  <input name="carModel" type="text" placeholder="Car Model" value={formData.carModel} onChange={handleChange} required />
-                  <input name="chargerModel" type="text" placeholder="Charger Model" value={formData.chargerModel} onChange={handleChange} required />
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <input
+                      name="carModel"
+                      type="text"
+                      placeholder="Car Model"
+                      value={formData.carModel}
+                      onChange={handleChange}
+                      required
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCarModelRedirect}
+                      style={{
+                        padding: '10px 16px',
+                        background: '#00bcd4',
+                        color: '#111827',
+                        borderRadius: '12px',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      🔍 Browse
+                    </button>
+                  </div>
+
+                  <label>Charger Model</label>
+                  <select
+                    name="chargerModel"
+                    value={formData.chargerModel}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select Charger Type</option>
+                    {chargerTypes.map((type, index) => (
+                      <option key={index} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </>
               )}
 
