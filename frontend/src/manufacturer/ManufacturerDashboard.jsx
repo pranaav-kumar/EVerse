@@ -13,7 +13,7 @@ const ManufacturerDashboard = () => {
         <h1>EV Travel Assistant</h1>
         <div className="menu">
           <div className="menu-item">
-            <ChartLine size={20} /> <span>Demand Prediction</span>
+            <ChartLine size={20} /> <span onClick={()=>navigate("/manufacturer/demand")}>Demand Prediction</span>
           </div>
           <div className="menu-item">
             <Plus size={20} /> <span onClick={()=>navigate("/addstations")}>Add Stations</span>
