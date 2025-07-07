@@ -25,7 +25,7 @@ export default function StationMaintenance() {
       timestamp: new Date().toISOString(),
     };
     console.log("Booking confirmed:", bookingDetails);
-    alert(`✅ Booking Confirmed at ${station.name} for ${selectedSlot}`);
+    alert(` Booking Confirmed at ${station.name} for ${selectedSlot}`);
   };
 
   const openDirections = () => {

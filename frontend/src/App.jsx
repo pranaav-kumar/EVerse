@@ -10,6 +10,10 @@ import 'leaflet/dist/leaflet.css';
 import Home from "./user/Home";
 import StationMaintenance from "./user/StationMaintenance";
 import ManufacturerDashboard from './manufacturer/ManufacturerDashboard.jsx';
+import Demand from "./manufacturer/Demand.jsx";
+import Revenue from './manufacturer/Revenue.jsx'
+
+
 
 function App(){
   const [stations, setStations] = useState([]);
@@ -27,6 +31,8 @@ function App(){
           <Route path="/user/map" element={<StationMap />} />
           <Route path="/home" element={<Home />} />
           <Route path="/user/station/:id" element={<StationMaintenance />} />
+          <Route path="/manufacturer/demand" element={<Demand />} />
+          <Route path="/manufacturer/revenue" element={<Revenue />} />
         </Routes>
       </BrowserRouter>
   );
