@@ -12,6 +12,7 @@ import StationMaintenance from "./user/StationMaintenance";
 import ManufacturerDashboard from './manufacturer/ManufacturerDashboard.jsx';
 import Demand from "./manufacturer/Demand.jsx";
 import Revenue from './manufacturer/Revenue.jsx'
+import Payment from "./user/Payment";
 
 
 
@@ -33,6 +34,7 @@ function App(){
           <Route path="/user/station/:id" element={<StationMaintenance />} />
           <Route path="/manufacturer/demand" element={<Demand />} />
           <Route path="/manufacturer/revenue" element={<Revenue />} />
+          <Route path="/payment" element={<Payment />} />
         </Routes>
       </BrowserRouter>
   );
