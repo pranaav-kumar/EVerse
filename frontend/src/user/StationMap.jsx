@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import L from "leaflet";
@@ -10,45 +9,7 @@ export default function StationMap() {
   const [userLocation, setUserLocation] = useState(null);
   const navigate = useNavigate();
 
-  const dummyStations = [
-    {
-      id: "cs101",
-      name: "Nungambakkam Charging Port",
-      type: "charging",
-      lat: 13.0587,
-      lng: 80.2511,
-      availableSlots: 3,
-      waitTime: "10 mins",
-    },
-    {
-      id: "cs102",
-      name: "T Nagar Fast Charger",
-      type: "charging",
-      lat: 13.0422,
-      lng: 80.2337,
-      availableSlots: 1,
-      waitTime: "25 mins",
-    },
-    {
-      id: "bs201",
-      name: "Adyar Battery Swap Station",
-      type: "swap",
-      lat: 13.0067,
-      lng: 80.2578,
-      availableBatteries: 5,
-      batteryTypes: ["Lithium-ion", "LFP"],
-    },
-    {
-      id: "bs202",
-      name: "Velachery Battery Hub",
-      type: "swap",
-      lat: 12.9763,
-      lng: 80.2211,
-      availableBatteries: 3,
-      batteryTypes: ["Lithium-ion"],
-    },
-  ];
-
+  // 📍 Step 1: Get User Location
   useEffect(() => {
     const fetchLocation = () => {
       navigator.geolocation.getCurrentPosition(
@@ -72,14 +33,23 @@ export default function StationMap() {
       if (result.state === "granted" || result.state === "prompt") {
         fetchLocation();
       } else {
-        alert("⚠️ Location permission denied. Please enable it in browser settings.");
+        alert("⚠️ Location permission denied.");
         setUserLocation([13.0827, 80.2707]);
       }
     });
   }, []);
 
+  // 🔁 Step 2: Fetch Station Data from Backend
   useEffect(() => {
-    if (!userLocation) return;
+    fetch("http://localhost:5000/api/stations")
+      .then((res) => res.json())
+      .then((data) => setStations(data))
+      .catch((err) => console.error("Error fetching stations:", err));
+  }, []);
+
+  // 🗺️ Step 3: Render Map + Markers
+  useEffect(() => {
+    if (!userLocation || stations.length === 0) return;
 
     const mapContainer = document.getElementById("map");
     if (mapContainer && mapContainer._leaflet_id) {
@@ -101,22 +71,24 @@ export default function StationMap() {
       .bindPopup("📍 Your Location")
       .openPopup();
 
-    dummyStations.forEach((station) => {
-      const marker = L.marker([station.lat, station.lng]).addTo(mapInstance);
+    stations.forEach((station) => {
+      const { _id, name, location, type, connectors, ports, power } = station;
+      const marker = L.marker([location.lat, location.lng]).addTo(mapInstance);
+
       marker.bindPopup(
-        `<div style='font-size:15px; font-weight:600;'>${station.name}</div>
-        ${station.type === "charging"
-          ? `⚡ Slots: ${station.availableSlots}<br/>Wait: ${station.waitTime}`
-          : `🔋 Batteries: ${station.availableBatteries}<br/>Types: ${station.batteryTypes.join(", ")}`
-        }<br/><button id='go-${station.id}' style='margin-top:6px;background:#4f46e5;color:white;padding:6px 12px;border-radius:6px;border:none;cursor:pointer;'>📍 Show Route</button>`
+        `<div style='font-size:15px; font-weight:600;'>${name}</div>
+        ${type.includes("Charging")
+          ? `⚡ Connectors: ${connectors}<br/>Ports: ${ports}<br/>Power: ${power}`
+          : `🔋 Battery Swapping`}<br/>
+        <button id='go-${_id}' style='margin-top:6px;background:#4f46e5;color:white;padding:6px 12px;border-radius:6px;border:none;cursor:pointer;'>📍 Show Route</button>`
       );
 
       marker.on("popupopen", () => {
         setTimeout(() => {
-          const btn = document.getElementById(`go-${station.id}`);
+          const btn = document.getElementById(`go-${_id}`);
           if (btn) {
             btn.onclick = () => {
-              const directionUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLocation[0]},${userLocation[1]}&destination=${station.lat},${station.lng}`;
+              const directionUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLocation[0]},${userLocation[1]}&destination=${location.lat},${location.lng}`;
               window.open(directionUrl, "_blank");
             };
           }
@@ -124,18 +96,17 @@ export default function StationMap() {
       });
 
       marker.on("dblclick", () => {
-        navigate(`/user/station/${station.id}`, { state: station });
+        navigate(`/user/station/${_id}`, { state: station });
       });
     });
 
     setMap(mapInstance);
-    setStations(dummyStations);
-  }, [userLocation]);
+  }, [userLocation, stations]);
 
   return (
     <div className="bg-gradient-to-b from-zinc-900 to-gray-800 min-h-screen w-screen text-white">
       <header className="p-6 bg-gray-700 text-white text-center shadow-md">
-        <h1 className="text-4xl font-extrabold tracking-wide">⚡ EVerse Station Finder</h1>
+        <h1 className="text-4xl font-extrabold tracking-wide">EVerse Station Finder</h1>
         <p className="text-lg mt-1 font-medium">Charging & Battery Swap Stations in Real-Time</p>
       </header>
 
@@ -148,27 +119,18 @@ export default function StationMap() {
         <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {stations.map((s) => (
             <div
-              key={s.id}
-              onClick={() => navigate(`/user/station/${s.id}`, { state: s })}
+              key={s._id}
+              onClick={() => navigate(`/user/station/${s._id}`, { state: s })}
               className="bg-white text-gray-900 border-2 border-indigo-200 p-5 rounded-2xl shadow-xl cursor-pointer hover:bg-indigo-100 hover:border-indigo-400 transition-all"
             >
               <h4 className="text-xl font-bold text-indigo-800 mb-2">{s.name}</h4>
               <p className="text-sm text-indigo-600 font-semibold mb-1">
-                {s.type === "charging" ? "⚡ Charging Port" : "🔁 Battery Swap Station"}
+                {s.type.includes("Charging") ? "⚡ Charging Port" : "🔁 Battery Swap Station"}
               </p>
-              {s.type === "charging" ? (
-                <>
-                  <p className="text-sm text-indigo-800">Available Slots: {s.availableSlots}</p>
-                  <p className="text-sm text-indigo-800">Wait Time: {s.waitTime}</p>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-indigo-800">Available Batteries: {s.availableBatteries}</p>
-                  <p className="text-sm text-indigo-800">
-                    Battery Types: {s.batteryTypes.join(", ")}
-                  </p>
-                </>
-              )}
+              <p className="text-sm text-indigo-800">Connector: {s.connectors}</p>
+              <p className="text-sm text-indigo-800">Ports: {s.ports}</p>
+              <p className="text-sm text-indigo-800">Power: {s.power}</p>
+              <p className="text-sm text-indigo-800">📍 {s.location.address}</p>
             </div>
           ))}
         </div>
