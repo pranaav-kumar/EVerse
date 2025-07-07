@@ -36,6 +36,8 @@ export default function StationMaintenance() {
       userEmail: "user1@example.com",
     };
 
+    console.log("Booking confirmed:", bookingDetails);
+    alert(` Booking Confirmed at ${station.name} for ${selectedSlot}`);
     try {
       await fetch("http://localhost:5000/api/bookings", {
         method: "POST",
@@ -49,6 +51,7 @@ export default function StationMaintenance() {
       alert("Booking failed. Try again.");
       console.error(err);
     }
+
   };
 
   useEffect(() => {
