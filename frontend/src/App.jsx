@@ -14,7 +14,6 @@ import ManufacturerDashboard from './manufacturer/ManufacturerDashboard.jsx';
 import Demand from "./manufacturer/Demand.jsx";
 import Revenue from './manufacturer/Revenue.jsx'
 import Payment from "./user/Payment";
-import Payment from "./user/Payment";
 
 
 function App(){

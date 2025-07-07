@@ -61,7 +61,7 @@ function Demand() {
         <HeatmapLayer points={heatPoints} />
         </MapContainer>
 
-    <div className="mt-6 bg-white p-4 rounded shadow">
+    <div className="mt-6 bg-black p-4 rounded shadow">
         <h3 className="text-xl font-semibold mb-2">Station Demand Data</h3>
         <ul className="space-y-1">
             {stations.map(station => (
