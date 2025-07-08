@@ -7,6 +7,7 @@ import StationMap from "./StationMap";
 import pumpImg from './userAssets/pump.png';
 import routeImg from './userAssets/route.png';
 import dashImg from './userAssets/dash.png';
+import emergencyimg from './userAssets/emergency.jpeg';
 
 import * as THREE from "three";
 import GLOBE from "vanta/dist/vanta.globe.min";
@@ -110,9 +111,9 @@ const Home = () => {
             <p>View your vehicle’s status, charging history, and more.</p>
           </div>
           <div className="card" onClick={()=>navigate('/user/Emergency')}>
-            <img src={pumpImg} alt="Charging Map" />
-            <h3>Charging Map</h3>
-            <p>Find charging stations near you or along your route.</p>
+            <img src={emergencyimg} alt="Emergency" />
+            <h3>Emergency</h3>
+            <p>Request help in emergencies or help others.</p>
           </div>
         </div>
         
