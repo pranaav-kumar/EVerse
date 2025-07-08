@@ -99,7 +99,7 @@ const Home = () => {
             <h3>Charging Map</h3>
             <p>Find charging stations near you or along your route.</p>
           </div>
-          <div className="card">
+          <div className="card" onClick={()=>navigate('/RoutePlanner')}>
             <img src={routeImg} alt="Route Planner" />
             <h3>Route Planner</h3>
             <p>Plan your trip with charging stops and estimated travel time.</p>

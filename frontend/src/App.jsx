@@ -12,6 +12,7 @@ import ManufacturerDashboard from "./manufacturer/ManufacturerDashboard.jsx";
 import Demand from "./manufacturer/Demand.jsx";
 import Revenue from "./manufacturer/Revenue.jsx";
 import Payment from "./user/Payment";
+import RoutePlanner from "./user/RoutePlanner.jsx";
 import CarModelSelection from "./CarModelSelection.jsx"; // 
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
         <Route path="/user/map" element={<StationMap />} />
         <Route path="/user/station/:id" element={<StationMaintenance />} />
         <Route path="/payment" element={<Payment />} />
+        <Route path="/RoutePlanner" element={<RoutePlanner />} />
 
         {/* Manufacturer Routes */}
         <Route path="/manufacturer-dashboard" element={<ManufacturerDashboard />} />
