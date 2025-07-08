@@ -13,6 +13,7 @@
     "axios": "^1.10.0",
     "kmeans-js": "^0.1.2",
     "leaflet": "^1.9.4",
+    "leaflet-geosearch": "^4.2.0",
     "leaflet.heat": "^0.2.0",
     "lucide-react": "^0.525.0",
     "ml-kmeans": "^6.0.0",
