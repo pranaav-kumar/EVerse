@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polyline, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -18,6 +18,66 @@ const tempIcon = new L.Icon({
   iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
   iconSize: [28, 38],
 });
+
+const stationIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/17310/17310029.png",
+  iconSize: [22, 22],
+});
+
+// Static EV stations
+const stations = [ // Only sample listed
+  { lat: 13.0664462, lng: 80.2695916 },
+  { lat: 13.067525, lng: 80.2519303 },
+  { lat: 13.0701, lng: 80.2455 },
+  { lat: 13.0451, lng: 80.2103 },
+  { lat: 13.0878, lng: 80.2785 },
+  { lat: 12.9716, lng: 80.2436 },
+  { lat: 13.0569, lng: 80.2091 },
+  { lat: 13.0475, lng: 80.2572 },
+  { lat: 13.0199, lng: 80.2357 },
+  { lat: 13.1067, lng: 80.2099 },
+  { lat: 13.04654, lng: 80.0794682 },
+  { lat: 12.8679494, lng: 80.076113 },
+  { lat: 12.9453463, lng: 79.2006151 },
+  { lat: 12.9165, lng: 79.1325 },
+  { lat: 11.0403462, lng: 77.040949 },
+  { lat: 10.8629236, lng: 76.872977 },
+  { lat: 11.0168, lng: 76.9558 },
+  { lat: 11.051, lng: 76.9339 },
+  { lat: 10.9601, lng: 76.9702 },
+  { lat: 9.4678754, lng: 77.5658912 },
+  { lat: 12.2525098, lng: 79.0695341 },
+  { lat: 12.2401657, lng: 79.6624831 },
+  { lat: 9.9252, lng: 78.1198 },
+  { lat: 9.9173, lng: 78.1242 },
+  { lat: 11.6643, lng: 78.146 },
+  { lat: 11.6796, lng: 78.139 },
+  { lat: 10.7905, lng: 78.7047 },
+  { lat: 10.8155, lng: 78.6945 },
+  { lat: 11.341, lng: 77.7172 },
+  { lat: 8.7139, lng: 77.7567 },
+  { lat: 8.0883, lng: 77.5385 },
+  { lat: 11.4064, lng: 76.6932 },
+  { lat: 12.7409, lng: 77.8253 },
+  { lat: 12.8185, lng: 79.7055 },
+  { lat: 10.787, lng: 79.1378 },
+  { lat: 10.3673, lng: 77.9803 },
+  { lat: 10.9601, lng: 78.0766 },
+  { lat: 11.7449, lng: 79.7689 },
+  { lat: 10.7677, lng: 79.8448 },
+  { lat: 10.3833, lng: 78.8167 },
+  { lat: 12.5186, lng: 78.2137 },
+  { lat: 12.1211, lng: 78.1583 },
+  { lat: 9.8433, lng: 78.4811 },
+  { lat: 9.3763, lng: 78.8349 },
+  { lat: 10.0104, lng: 77.4977 },
+  { lat: 9.581, lng: 77.9624 },
+  { lat: 11.2189, lng: 78.1677 },
+  { lat: 11.3524, lng: 76.7959 },
+  { lat: 11.1401, lng: 79.0757 },
+  { lat: 11.2342, lng: 78.8964 },
+  { lat: 8.7642, lng: 78.1348 },
+];
 
 function MapSearch({ position }) {
   const map = useMap();
@@ -78,6 +138,9 @@ const RoutePlanner = () => {
   const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]);
   const [query, setQuery] = useState("");
 
+  const [shortestRoute, setShortestRoute] = useState([]);
+  const [evRoute, setEvRoute] = useState([]);
+
   const confirmLocation = async () => {
     if (!tempLocation) return;
     const { lat, lng } = tempLocation;
@@ -97,222 +160,109 @@ const RoutePlanner = () => {
     setSearchMarker(null);
   };
 
-  const openGoogleMaps = () => {
-    if (start && end) {
-      const url = `https://www.google.com/maps/dir/?api=1&origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}`;
-      window.open(url, '_blank');
-    } else {
-      alert("Please set both start and end locations.");
-    }
-  };
+  useEffect(() => {
+    if (!start || !end) return;
 
-  const calculateRouteData = () => {
-    if (!start || !end) return null;
-    const latDiff = Math.abs(start.lat - end.lat);
-    const lngDiff = Math.abs(start.lng - end.lng);
-    const baseTime = 4.5;
-    const factor = latDiff + lngDiff;
-    return [
-      {
-        label: "Most EV Stations",
-        time: `${(baseTime + factor * 2).toFixed(2)} hr`,
-        stops: 4,
-        wait: "45 mins",
-        color: "from-emerald-500 to-teal-600",
-      },
-      {
-        label: "Shortest Path",
-        time: `${(baseTime + factor).toFixed(2)} hr`,
-        stops: 2,
-        wait: "20 mins",
-        color: "from-blue-500 to-indigo-600",
-      },
-      {
-        label: "Scenic Route",
-        time: `${(baseTime + factor * 2.5).toFixed(2)} hr`,
-        stops: 3,
-        sights: 5,
-        color: "from-purple-500 to-pink-600",
-      }
-    ];
-  };
+    fetch("http://127.0.0.1:8000/ev_prediction_full", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ start, end }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const shortestCoords = data.shortest_route?.features[0]?.geometry?.coordinates || [];
+        const evCoords = data.ev_station_route?.features[0]?.geometry?.coordinates || [];
 
-  const routeOptions = calculateRouteData();
+        setShortestRoute(shortestCoords.map(([lng, lat]) => [lat, lng]));
+        setEvRoute(evCoords.map(([lng, lat]) => [lat, lng]));
+      })
+      .catch((err) => {
+        console.error("Route fetch failed", err);
+      });
+  }, [start, end]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0d1b2a] via-[#1e3a5f] to-[#0d1b2a] text-white">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Plan Your Trip
+            Plan Your Trip
           </h1>
           <p className="text-gray-300 text-lg">Smart route planning for electric vehicles</p>
         </div>
 
-        {/* Search Section */}
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-gray-700/50">
+        <div className="bg-gray-800/50 rounded-2xl p-6 mb-8 border border-gray-700/50">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder=" Search for any location..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full px-6 py-4 rounded-xl bg-gray-900/70 text-white border border-gray-600/50 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-lg"
-              />
-            </div>
+            <input
+              type="text"
+              placeholder=" Search location..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full px-6 py-4 rounded-xl bg-gray-900/70 text-white border border-gray-600/50"
+            />
             <button
               onClick={() => handleSearch(query, setMapCenter, setTempLocation, setSearchMarker, setTempName)}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-blue-500/25 text-lg"
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl font-semibold"
             >
               Search
             </button>
           </div>
 
-          {/* Location Selection Buttons */}
           <div className="flex flex-wrap gap-4 justify-center">
-            <button
-              onClick={() => setMode("start")}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg ${
-                mode === "start" 
-                  ? "bg-gradient-to-r from-green-600 to-green-700 shadow-green-500/25" 
-                  : "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-green-500/25"
-              }`}
-            >
-                Choose Start Location
+            <button onClick={() => setMode("start")} className="px-6 py-3 rounded-xl bg-green-600 font-semibold">
+              Choose Start
             </button>
-            <button
-              onClick={() => setMode("end")}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg ${
-                mode === "end" 
-                  ? "bg-gradient-to-r from-red-600 to-red-700 shadow-red-500/25" 
-                  : "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 hover:shadow-red-500/25"
-              }`}
-            >
-                Choose End Location
+            <button onClick={() => setMode("end")} className="px-6 py-3 rounded-xl bg-red-600 font-semibold">
+              Choose End
             </button>
             {tempLocation && mode && (
-              <button
-                onClick={confirmLocation}
-                className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl hover:from-yellow-600 hover:to-orange-600 font-semibold transition-all duration-300 shadow-lg hover:shadow-yellow-500/25 animate-pulse"
-              >
-                  Confirm Location
+              <button onClick={confirmLocation} className="px-6 py-3 bg-yellow-500 rounded-xl font-semibold">
+                Confirm Location
               </button>
             )}
           </div>
         </div>
 
-        {/* Map Container */}
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-gray-700/50">
+        <div className="bg-gray-800/50 rounded-2xl p-6 mb-8 border border-gray-700/50">
           <MapContainer
             center={mapCenter}
-            zoom={5}
-            style={{ 
-              height: "450px", 
-              borderRadius: "16px", 
-              border: "2px solid rgba(59, 130, 246, 0.3)",
-              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3)"
-            }}
+            zoom={6}
+            style={{ height: "450px", borderRadius: "16px" }}
             whenCreated={(map) => (window.leafletMap = map)}
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors"
+              attribution="&copy; OpenStreetMap"
             />
             <MapSearch position={mapCenter} />
             {mode && <ClickLocation mode={mode} setTemp={setTempLocation} />}
-            {start && <Marker position={start} icon={startIcon} />} 
-            {end && <Marker position={end} icon={endIcon} />} 
+            {start && <Marker position={start} icon={startIcon} />}
+            {end && <Marker position={end} icon={endIcon} />}
             {tempLocation && mode && <Marker position={tempLocation} icon={tempIcon} />}
+            {stations.map((s, i) => (
+              <Marker key={i} position={[s.lat, s.lng]} icon={stationIcon} />
+            ))}
+            {shortestRoute.length > 0 && <Polyline positions={shortestRoute} color="blue" />}
+            {evRoute.length > 0 && <Polyline positions={evRoute} color="green" />}
           </MapContainer>
         </div>
 
-        {/* Selected Locations Display */}
         {(startAddress || endAddress) && (
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-gray-700/50">
-            <h3 className="text-xl font-semibold mb-4 text-center"> Selected Locations</h3>
+          <div className="bg-gray-800/50 rounded-2xl p-6 mb-8 border border-gray-700/50">
+            <h3 className="text-xl font-semibold mb-4 text-center">Selected Locations</h3>
             <div className="grid md:grid-cols-2 gap-4">
               {startAddress && (
-                <div className="bg-green-900/30 border border-green-600/50 rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl"></span>
-                    <div>
-                      <p className="font-semibold text-green-400">Start Location</p>
-                      <p className="text-sm text-gray-300">{startAddress}</p>
-                    </div>
-                  </div>
+                <div className="bg-green-900/30 p-4 rounded-xl">
+                  <p className="font-semibold text-green-400">Start</p>
+                  <p className="text-sm text-white">{startAddress}</p>
                 </div>
               )}
               {endAddress && (
-                <div className="bg-red-900/30 border border-red-600/50 rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl"></span>
-                    <div>
-                      <p className="font-semibold text-red-400">End Location</p>
-                      <p className="text-sm text-gray-300">{endAddress}</p>
-                    </div>
-                  </div>
+                <div className="bg-red-900/30 p-4 rounded-xl">
+                  <p className="font-semibold text-red-400">End</p>
+                  <p className="text-sm text-white">{endAddress}</p>
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* Smart Route Suggestions */}
-        {routeOptions && (
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-            <h2 className="text-2xl font-bold mb-6 text-center"> Smart Route Suggestions</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              {routeOptions.map((route, index) => (
-                <div
-                  key={index}
-                  onClick={openGoogleMaps}
-                  className="group relative bg-gray-900/70 rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-2xl border border-gray-700/50 hover:border-blue-500/50 overflow-hidden"
-                >
-                  {/* Gradient overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-r ${route.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl`}></div>
-                  
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="text-3xl">{route.icon}</span>
-                      <h3 className="font-bold text-lg text-white group-hover:text-blue-300 transition-colors">
-                        {route.label}
-                      </h3>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-blue-400">⏱</span>
-                        <span className="text-gray-300">Time: <span className="font-semibold text-white">{route.time}</span></span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-400"></span>
-                        <span className="text-gray-300">Stops: <span className="font-semibold text-white">{route.stops}</span></span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {route.label === "Scenic Route" ? (
-                          <>
-                            <span className="text-purple-400"></span>
-                            <span className="text-gray-300">Sights: <span className="font-semibold text-white">{route.sights}</span></span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-yellow-400"></span>
-                            <span className="text-gray-300">Wait: <span className="font-semibold text-white">{route.wait}</span></span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <p className="text-sm text-blue-300 font-semibold">Click to open in Google Maps →</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         )}
