@@ -13,7 +13,10 @@ import Demand from "./manufacturer/Demand.jsx";
 import Revenue from "./manufacturer/Revenue.jsx";
 import Payment from "./user/Payment";
 import RoutePlanner from "./user/RoutePlanner.jsx";
-import CarModelSelection from "./CarModelSelection.jsx"; // 
+import CarModelSelection from "./CarModelSelection.jsx";
+import EmergencyRequest from "./user/EmergencyRequest.jsx";
+import RequestList from "./user/RequestList.jsx";
+import EmergencyPage from "./user/EmergencyPage.jsx";
 
 function App() {
   const [stations, setStations] = useState([]);
@@ -31,6 +34,9 @@ function App() {
         <Route path="/user/station/:id" element={<StationMaintenance />} />
         <Route path="/payment" element={<Payment />} />
         <Route path="/RoutePlanner" element={<RoutePlanner />} />
+        <Route path="/user/EmergencyRequest" element={<EmergencyRequest />} />
+        <Route path="/user/RequestList" element={<RequestList/>} />
+        <Route path="/user/Emergency" element={<EmergencyPage/>} />
 
         {/* Manufacturer Routes */}
         <Route path="/manufacturer-dashboard" element={<ManufacturerDashboard />} />
