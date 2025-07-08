@@ -109,6 +109,11 @@ const Home = () => {
             <h3>Dashboard</h3>
             <p>View your vehicle’s status, charging history, and more.</p>
           </div>
+          <div className="card" onClick={()=>navigate('/user/Emergency')}>
+            <img src={pumpImg} alt="Charging Map" />
+            <h3>Charging Map</h3>
+            <p>Find charging stations near you or along your route.</p>
+          </div>
         </div>
         
       </main>
